@@ -25,7 +25,8 @@
                 <tr>
                     <th>Nome</th>
                     <th>Código</th>
-                    <!-- <th>Acompanhantes</th>
+                    <th>Acompanhantes</th>
+                    <!-- 
                     <th>Status</th> -->
                     <th>Link Confirmação</th>
                     <th>Mensagem Código</th>
@@ -37,7 +38,9 @@
                 <tr>
                     <td>{{ guest.name }}</td>
                     <td>{{ guest.code }}</td>
-                    <!-- <td>
+                     <td> 
+                        <small>{{ guest.companions }}</small>
+                        <!--
                         <form method="post" action="{% url 'update_companions' guest.pk %}" class="d-inline">
                             {% csrf_token %}
                             <div class="d-flex flex-column align-items-center">
