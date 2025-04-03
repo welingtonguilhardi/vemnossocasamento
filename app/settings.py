@@ -1,4 +1,6 @@
 from pathlib import Path
+from decouple import config
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -64,8 +66,16 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': config('DATABASE_ENGINE'),
+        'NAME': config('DATABASE_NAME'),      # Nome do banco de dados que você criou
+        'USER': config('DATABASE_USER'),      # Seu usuário MySQL
+        'PASSWORD': config('DATABASE_PASSWORD'),    # Senha do usuário
+        'HOST': config('DATABASE_HOST'),          # Ou o endereço do servidor MySQL
+        'PORT': config('DATABASE_PORT'),               # Porta do MySQL (padrão é 3306)
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
+        },
     }
 }
 
