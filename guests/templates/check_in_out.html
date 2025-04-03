@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h2 class="h5 mb-0">Editar Status: {{ guest.name }}</h2>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3 form-check form-switch">
+                        {{ form.checked_in }}
+                        <label class="form-check-label" for="id_checked_in">Presente no evento</label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_companions_checked_in" class="form-label">Acompanhantes presentes</label>
+                        {{ form.companions_checked_in }}
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'guest_list' %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

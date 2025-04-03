@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Convidados</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome para ícones -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            cursor: pointer;
+        }
+        .companion-input {
+            width: 60px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Modal para copiar links -->
+<div class="modal fade" id="linksModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Links de confirmação para <span id="modalGuestName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Copie a mensagem abaixo para enviar ao convidado:</p>
+                <textarea id="confirmationMessage" class="form-control mb-3" rows="8" readonly></textarea>
+                <button id="copyButton" class="btn btn-primary w-100">
+                    <i class="fas fa-copy me-2"></i> Copiar Mensagem
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+    <div class="container py-4">
+        <header class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <h1 class="h3">Gerenciador de Convidados</h1>
+            <a href="{% url 'add_guest' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Novo Convidado
+            </a>
+            <a href="{% url 'confirmation_dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-clipboard-check me-1"></i> Painel de Confirmações
+            </a>
+            <a href="{% url 'guest_list' %}" class="btn btn-primary">
+                <i class="fas fa-users-rectangle me-1"></i> Lista de Convidados
+            </a>
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </header>
+        
+        <div class="card shadow">
+            <div class="card-body">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS e dependências -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery para AJAX -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Alternar status do convidado principal via AJAX
+            $('form[action^="/toggle-check-in/"]').on('submit', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                var badge = form.find('.status-badge');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(data) {
+                        if (data.checked_in) {
+                            badge.removeClass('bg-secondary').addClass('bg-success');
+                            badge.html('<i class="fas fa-check-circle me-1"></i> Presente');
+                        } else {
+                            badge.removeClass('bg-success').addClass('bg-secondary');
+                            badge.html('<i class="fas fa-times-circle me-1"></i> Ausente');
+                        }
+                    }
+                });
+            });
+        
+            // Atualizar acompanhantes via AJAX
+            $('form[action^="/update-companions/"]').on('submit', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function() {
+                        // Feedback visual
+                        var btn = form.find('button');
+                        btn.html('<i class="fas fa-check"></i>');
+                        setTimeout(function() {
+                            btn.html('<i class="fas fa-check"></i>');
+                        }, 1000);
+                    }
+                });
+            });
+        });
+        </script>
+
+
+<script>
+    function showMessages(messages) {
+        messages.forEach(msg => {
+            let alertDiv = `<div class="alert alert-${msg.tags} alert-dismissible fade show" role="alert">
+                                ${msg.message}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>`;
+            $(".container").prepend(alertDiv);  // Adiciona as mensagens no topo
+        });
+    }
+
+    $(document).ready(function() {
+        $('form[action^="/toggle-check-in/"]').on('submit', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            var badge = form.find('.status-badge');
+
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(data) {
+                    if (data.checked_in) {
+                        badge.removeClass('bg-secondary').addClass('bg-success');
+                        badge.html('<i class="fas fa-check-circle me-1"></i> Presente');
+                    } else {
+                        badge.removeClass('bg-success').addClass('bg-secondary');
+                        badge.html('<i class="fas fa-times-circle me-1"></i> Ausente');
+                    }
+                    showMessages(data.messages);
+                }
+            });
+        });
+
+        $('form[action^="/update-companions/"]').on('submit', function(e) {
+            e.preventDefault();
+            var form = $(this);
+
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                success: function(data) {
+                    var btn = form.find('button');
+                    btn.html('<i class="fas fa-check"></i>');
+                    setTimeout(() => { btn.html('<i class="fas fa-check"></i>'); }, 1000);
+
+                    showMessages(data.messages);
+                }
+            });
+        });
+    });
+</script>
+<script>
+    $(document).ready(function() {
+    // Configuração do CSRF token para AJAX
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Gerar links de confirmação
+    $('.generate-links').click(function() {
+        const guestId = $(this).data('guest-id');
+        const guestName = $(this).data('guest-name');
+        
+        $.ajax({
+            url: `/generate-confirmation-links/${guestId}/`,
+            type: 'GET',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#modalGuestName').text(response.guest_name);
+                    $('#confirmationMessage').val(response.message);
+                    $('#linksModal').modal('show');
+                    
+                    // Debug no console
+                    console.log('Links gerados com sucesso!');
+                    console.log('Guest ID:', guestId);
+                    console.log('Guest Name:', response.guest_name);
+                    console.log('Confirmation message:', response.message);
+                    console.log('Links:', response.links);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Erro ao gerar links:', error);
+                alert('Ocorreu um erro ao gerar os links de confirmação.');
+            }
+        });
+    });
+
+    // Copiar mensagem
+    $('#copyButton').click(function() {
+        const textarea = $('#confirmationMessage');
+        textarea.select();
+        document.execCommand('copy');
+        
+        // Feedback visual
+        const originalText = $(this).html();
+        $(this).html('<i class="fas fa-check me-2"></i> Copiado!');
+        setTimeout(() => {
+            $(this).html(originalText);
+        }, 2000);
+    });
+});
+</script>
+
+<script>
+    // Copiar links individuais
+$(document).on('click', '.copy-link', function() {
+    const link = $(this).data('link');
+    navigator.clipboard.writeText(link).then(function() {
+        const originalHtml = $(this).html();
+        $(this).html('<i class="fas fa-check"></i>');
+        setTimeout(() => {
+            $(this).html(originalHtml);
+        }, 2000);
+    }.bind(this)).catch(function(error) {
+        console.error('Erro ao copiar:', error);
+    });
+});
+
+// Atualizar a página após gerar novos links
+$(document).on('click', '.generate-links', function() {
+    const guestId = $(this).data('guest-id');
+    const guestName = $(this).data('guest-name');
+    
+    $.ajax({
+        url: `/generate-confirmation-links/${guestId}/`,
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                $('#modalGuestName').text(response.guest_name);
+                $('#confirmationMessage').val(response.message);
+                $('#linksModal').modal('show');
+                
+                // Recarregar a página após fechar o modal
+                $('#linksModal').on('hidden.bs.modal', function() {
+                    location.reload();
+                });
+            }
+        }
+    });
+});
+</script>
+
+
+<script>
+    // Atualizar a página após gerar novos links
+$(document).on('click', '.generate-mensage-link', function() {
+    const guestId = $(this).data('guest-id');
+    const guestName = $(this).data('guest-name');
+    const guestCode = $(this).data('guest-code');
+    const message = `Olá ${guestName},
+
+É um grande prazer contar com a sua presença no nosso casamento!
+
+Para facilitar a sua entrada no local do evento, segue o seu código de confirmação pessoal:
+
+${guestCode}
+
+Este código será solicitado na chegada para identificação e agilizar o seu acesso. Por favor, guarde-o e apresente-o no dia do evento.
+
+Qualquer dúvida, é só entrar em contato conosco. Mal podemos esperar para celebrar esse momento especial com você!
+
+Com carinho,
+Carla e Welington`;
+    
+
+    $('#modalGuestName').text(guestName);
+    $('#confirmationMessage').val(message);
+    $('#linksModal').modal('show');
+    
+    // Recarregar a página após fechar o modal
+    $('#linksModal').on('hidden.bs.modal', function() {
+        location.reload();
+    });
+            
+        
+
+});
+
+
+</script>
+
+<style>
+    /* Estilo para a tabela de confirmações */
+#confirmationTable tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#confirmationTable tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Estilo para os badges de status */
+.badge-pill {
+    padding: 0.5em 0.75em;
+}
+
+/* Estilo para os botões de ação */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Estilo para os cards */
+.card {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+</style>
+
+</body>
+</html>

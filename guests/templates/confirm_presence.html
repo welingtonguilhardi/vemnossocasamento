@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h2 class="h4 mb-0">Confirmação de Presença</h2>
+            </div>
+            <div class="card-body text-center">
+                <h3 class="h5">Olá, {{ guest.name }}!</h3>
+                <p class="mb-4">Por favor, confirme sua presença no evento clicando no botão abaixo:</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-check-circle me-2"></i> Confirmar Minha Presença
+                    </button>
+                </form>
+                
+                <p class="mt-4 text-muted">
+                    Caso não seja você, por favor ignore esta mensagem.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

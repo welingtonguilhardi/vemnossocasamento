@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Detalhes de Confirmação: {{ guest.name }}</h1>
+        <a href="{% url 'confirmation_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Voltar
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">Status Atual</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5 class="font-weight-bold">Código:</h5>
+                        <p>{{ guest.code }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h5 class="font-weight-bold">Status:</h5>
+                        <span class="badge rounded-pill {% if guest.checked_in %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if guest.checked_in %}
+                                <i class="fas fa-check-circle me-1"></i> Presente
+                            {% else %}
+                                <i class="fas fa-times-circle me-1"></i> Ausente
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <h5 class="font-weight-bold">Acompanhantes:</h5>
+                        <p>{{ guest.companions_checked_in }} de {{ guest.companions }} confirmados</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-info text-white">
+                    <h6 class="m-0 font-weight-bold">Histórico de Confirmações</h6>
+                </div>
+                <div class="card-body">
+                    {% if confirmation_history %}
+                    <div class="list-group">
+                        {% for confirmation in confirmation_history %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-1">Confirmação #{{ forloop.revcounter }}</h6>
+                                <small>{{ confirmation.used_at|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            <small class="text-muted">Link: {{ confirmation.token|truncatechars:15 }}...</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Nenhuma confirmação registrada</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-warning text-dark">
+                    <h6 class="m-0 font-weight-bold">Links Gerados</h6>
+                </div>
+                <div class="card-body">
+                    {% if all_links %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Data Geração</th>
+                                    <th>Status</th>
+                                    <th>Link</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for link in all_links %}
+                                <tr>
+                                    <td>{{ link.created_at|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if link.confirmed %}
+                                            <span class="badge bg-success">Confirmado</span>
+                                        {% elif link.is_valid %}
+                                            <span class="badge bg-primary">Pendente</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Expirado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">...{{ link.token|slice:"-8:" }}</small>
+                                        <button class="btn btn-sm btn-outline-secondary py-0 copy-link" 
+                                                data-link="http://{{ request.get_host }}{% url 'confirm_presence' link.token %}">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Nenhum link gerado</p>
+                    {% endif %}
+                    
+                    <button class="btn btn-primary mt-3 generate-links" 
+                            data-guest-id="{{ guest.pk }}" 
+                            data-guest-name="{{ guest.name }}">
+                        <i class="fas fa-plus me-1"></i> Gerar Novos Links
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
